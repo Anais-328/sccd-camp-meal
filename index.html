@@ -547,10 +547,14 @@ async function saveResponse(record){
   try{
     const k=safeKey(record.name,record.birthday);
     record.submittedAt=Date.now();
-    const res=await fetch(`${DB}/responses/${k}.json`,{
+    const ctrl=new AbortController();
+    const t=setTimeout(()=>ctrl.abort(),10000);
+    const res=await fetch(`${DB}/responses/${encodeURIComponent(k)}.json`,{
       method:'PUT',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(record)
+      body:JSON.stringify(record),signal:ctrl.signal
     });
+    clearTimeout(t);
+    if(!res.ok){const txt=await res.text();console.error('Firebase error:',res.status,txt);}
     return res.ok;
   }catch(e){console.error('save error',e);return false;}
 }
@@ -565,14 +569,14 @@ async function loadAllResponses(){
 }
 async function deleteResponseByKey(k){
   try{
-    const res=await fetch(`${DB}/responses/${k}.json`,{method:'DELETE'});
+    const res=await fetch(`${DB}/responses/${encodeURIComponent(k)}.json`,{method:'DELETE'});
     return res.ok;
   }catch(e){return false;}
 }
 async function updateResponseByKey(k,r){
   try{
     const c=Object.assign({},r);delete c.__key;
-    const res=await fetch(`${DB}/responses/${k}.json`,{
+    const res=await fetch(`${DB}/responses/${encodeURIComponent(k)}.json`,{
       method:'PUT',headers:{'Content-Type':'application/json'},
       body:JSON.stringify(c)
     });
@@ -989,7 +993,11 @@ function renderSummary(){
       name:state.person.name,birthday:state.person.birthday,
       group:state.person.group,joining:true,picks:state.picks
     });
-    if(!ok){btn.disabled=false;btn.textContent='送出';state.errorMsg='儲存失敗，請再試一次。';return render();}
+    if(!ok){
+      btn.disabled=false;btn.textContent='送出';
+      alert('送出失敗，請確認網路連線後再試一次。\n（若重試仍失敗，請截圖告知主辦方）');
+      return;
+    }
     state.view='done';render();
   };
 }
