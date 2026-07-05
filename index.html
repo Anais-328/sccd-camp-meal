@@ -1229,6 +1229,21 @@ function renderAdminEdit(){
   };
 }
 
+/* ── 表單截止 ── 想重新開放就把下面這段刪掉 */
+renderVerify=(function(orig){
+  return function(){
+    orig();
+    const card=app.querySelector('.card');
+    if(card) card.innerHTML=`
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:52px;margin-bottom:12px">🔒</div>
+        <h1 class="title">填寫時間已截止</h1>
+        <p class="sub">感謝大家的填寫，餐點資料已收到，營隊見！</p>
+      </div>`;
+  };
+})(renderVerify);
+/* ── 截止結束 ── */
+  
 render();
 </script>
 </body>
